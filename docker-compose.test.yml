@@ -28,20 +28,20 @@ services:
     restart: unless-stopped
 
   # Custom video streamer - mount your video file here
-  # Uncomment and use this to stream your own video files
-  # custom-stream:
-  #   image: jrottenberg/ffmpeg:latest
-  #   networks:
-  #     - dummy-shinobi-python_default
-  #   volumes:
-  #     - ./videos:/videos  # Put your video files in ./videos folder
-  #   command: >
-  #     -re -stream_loop -1 -i /videos/your-video.mp4
-  #     -c:v libx264 -preset ultrafast -tune zerolatency
-  #     -c:a aac -f rtsp rtsp://rtsp-server:8554/custom
-  #   depends_on:
-  #     - rtsp-server
-  #   restart: unless-stopped
+  # Put your video file in ./videos/4.mp4
+  custom-stream:
+    image: jrottenberg/ffmpeg:latest
+    networks:
+      - dummy-shinobi-python_default
+    volumes:
+      - ./videos:/videos
+    command: >
+      -re -stream_loop -1 -i /videos/4.mp4
+      -c:v libx264 -preset ultrafast -tune zerolatency
+      -c:a aac -f rtsp rtsp://rtsp-server:8554/myvideo
+    depends_on:
+      - rtsp-server
+    restart: unless-stopped
 
 networks:
   dummy-shinobi-python_default:
