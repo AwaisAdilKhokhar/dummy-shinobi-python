@@ -4,6 +4,8 @@ services:
   # Test RTSP server
   rtsp-server:
     image: bluenviron/mediamtx:latest
+    networks:
+      - dummy-shinobi-python_default
     ports:
       - "8554:8554"  # RTSP port
       - "8888:8888"  # Web UI
@@ -11,9 +13,11 @@ services:
       - MTX_PROTOCOLS=tcp
     restart: unless-stopped
 
-  # FFmpeg stream generator (optional)
+  # FFmpeg stream generator (test pattern)
   test-stream:
     image: jrottenberg/ffmpeg:latest
+    networks:
+      - dummy-shinobi-python_default
     command: >
       -re -f lavfi -i testsrc=size=1280x720:rate=30
       -f lavfi -i sine=frequency=1000
@@ -22,3 +26,23 @@ services:
     depends_on:
       - rtsp-server
     restart: unless-stopped
+
+  # Custom video streamer - mount your video file here
+  # Uncomment and use this to stream your own video files
+  # custom-stream:
+  #   image: jrottenberg/ffmpeg:latest
+  #   networks:
+  #     - dummy-shinobi-python_default
+  #   volumes:
+  #     - ./videos:/videos  # Put your video files in ./videos folder
+  #   command: >
+  #     -re -stream_loop -1 -i /videos/your-video.mp4
+  #     -c:v libx264 -preset ultrafast -tune zerolatency
+  #     -c:a aac -f rtsp rtsp://rtsp-server:8554/custom
+  #   depends_on:
+  #     - rtsp-server
+  #   restart: unless-stopped
+
+networks:
+  dummy-shinobi-python_default:
+    external: true
