@@ -1,8 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { apiClient } from '@/services/api';
 import { Camera, CameraStatus } from '@/types';
-import { VideoPlayer } from '@/components/VideoPlayer';
 import { FiPlus, FiVideo, FiVideoOff } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 
