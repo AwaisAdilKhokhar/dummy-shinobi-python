@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  # Test RTSP server
+  rtsp-server:
+    image: bluenviron/mediamtx:latest
+    ports:
+      - "8554:8554"  # RTSP port
+      - "8888:8888"  # Web UI
+    environment:
+      - MTX_PROTOCOLS=tcp
+    restart: unless-stopped
+
+  # FFmpeg stream generator (optional)
+  test-stream:
+    image: jrottenberg/ffmpeg:latest
+    command: >
+      -re -f lavfi -i testsrc=size=1280x720:rate=30
+      -f lavfi -i sine=frequency=1000
+      -c:v libx264 -preset ultrafast -tune zerolatency
+      -c:a aac -f rtsp rtsp://rtsp-server:8554/test
+    depends_on:
+      - rtsp-server
+    restart: unless-stopped
