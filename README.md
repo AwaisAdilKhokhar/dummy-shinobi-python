@@ -9,6 +9,7 @@ A modern, open-source video surveillance and Network Video Recorder (NVR) system
 - **Live Streaming**: Real-time HLS (HTTP Live Streaming) video playback
 - **Video Recording**: Continuous, motion-triggered, and scheduled recording modes
 - **Motion Detection**: Built-in motion detection with configurable sensitivity and regions
+- **PTZ Control**: Full Pan-Tilt-Zoom control for ONVIF cameras with preset management
 - **User Management**: Multi-user support with authentication and authorization
 - **RESTful API**: Comprehensive API for all operations
 - **WebSocket Support**: Real-time event notifications
@@ -17,6 +18,7 @@ A modern, open-source video surveillance and Network Video Recorder (NVR) system
 
 ### Technical Features
 - **Protocol Support**: RTSP, HTTP, and ONVIF camera protocols
+- **PTZ Support**: ONVIF-based PTZ control with continuous, absolute, and relative movement
 - **Video Codecs**: H.264, H.265, and MJPEG support
 - **FFmpeg Integration**: Powerful video processing and transcoding
 - **PostgreSQL Database**: Robust data storage
@@ -32,6 +34,7 @@ A modern, open-source video surveillance and Network Video Recorder (NVR) system
 - **Redis**: Caching and session management
 - **FFmpeg**: Video processing
 - **OpenCV**: Motion detection
+- **ONVIF**: PTZ camera control
 - **JWT**: Authentication
 
 ### Frontend
@@ -260,6 +263,90 @@ Headers: Authorization: Bearer <token>
 **Download Recording**
 ```bash
 GET /api/recordings/{recording_id}/download
+Headers: Authorization: Bearer <token>
+```
+
+### PTZ Control
+
+**Continuous Move**
+```bash
+POST /api/ptz/{camera_id}/continuous-move
+Headers: Authorization: Bearer <token>
+{
+  "pan": 0.5,      # -1.0 to 1.0 (left to right)
+  "tilt": 0.5,     # -1.0 to 1.0 (down to up)
+  "zoom": 0.0,     # -1.0 to 1.0 (out to in)
+  "timeout": 1     # seconds
+}
+```
+
+**Absolute Move**
+```bash
+POST /api/ptz/{camera_id}/absolute-move
+Headers: Authorization: Bearer <token>
+{
+  "pan": 0.0,      # -1.0 to 1.0 (absolute position)
+  "tilt": 0.0,     # -1.0 to 1.0 (absolute position)
+  "zoom": 0.5      # 0.0 to 1.0 (absolute zoom level)
+}
+```
+
+**Relative Move**
+```bash
+POST /api/ptz/{camera_id}/relative-move
+Headers: Authorization: Bearer <token>
+{
+  "pan": 0.1,      # -1.0 to 1.0 (relative translation)
+  "tilt": 0.1,     # -1.0 to 1.0 (relative translation)
+  "zoom": 0.1      # -1.0 to 1.0 (relative zoom change)
+}
+```
+
+**Stop Movement**
+```bash
+POST /api/ptz/{camera_id}/stop
+Headers: Authorization: Bearer <token>
+```
+
+**Get Presets**
+```bash
+GET /api/ptz/{camera_id}/presets
+Headers: Authorization: Bearer <token>
+```
+
+**Go to Preset**
+```bash
+POST /api/ptz/{camera_id}/goto-preset
+Headers: Authorization: Bearer <token>
+{
+  "preset_token": "preset_1"
+}
+```
+
+**Set Preset**
+```bash
+POST /api/ptz/{camera_id}/set-preset
+Headers: Authorization: Bearer <token>
+{
+  "name": "Main Entrance"
+}
+```
+
+**Remove Preset**
+```bash
+DELETE /api/ptz/{camera_id}/presets/{preset_token}
+Headers: Authorization: Bearer <token>
+```
+
+**Go to Home Position**
+```bash
+POST /api/ptz/{camera_id}/home
+Headers: Authorization: Bearer <token>
+```
+
+**Set Home Position**
+```bash
+POST /api/ptz/{camera_id}/set-home
 Headers: Authorization: Bearer <token>
 ```
 

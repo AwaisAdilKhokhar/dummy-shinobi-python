@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { apiClient } from '@/services/api';
 import { Camera, Recording } from '@/types';
 import { VideoPlayer } from '@/components/VideoPlayer';
+import { PTZControls } from '@/components/PTZControls';
 import { FiArrowLeft, FiPlay, FiSquare, FiSettings, FiTrash2, FiDownload } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
@@ -15,7 +16,7 @@ export const CameraDetail: React.FC = () => {
   const [isStreaming, setIsStreaming] = useState(false);
   const [streamUrl, setStreamUrl] = useState<string>('');
   const [isRecording, setIsRecording] = useState(false);
-  const [activeTab, setActiveTab] = useState<'live' | 'recordings'>('live');
+  const [activeTab, setActiveTab] = useState<'live' | 'recordings' | 'ptz'>('live');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -179,6 +180,18 @@ export const CameraDetail: React.FC = () => {
           >
             Recordings ({recordings.length})
           </button>
+          {camera?.protocol === 'onvif' && (
+            <button
+              onClick={() => setActiveTab('ptz')}
+              className={`px-4 py-2 rounded-lg ${
+                activeTab === 'ptz'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+              }`}
+            >
+              PTZ Controls
+            </button>
+          )}
         </div>
 
         {activeTab === 'live' && (
@@ -225,6 +238,10 @@ export const CameraDetail: React.FC = () => {
               )}
             </div>
           </div>
+        )}
+
+        {activeTab === 'ptz' && camera && (
+          <PTZControls cameraId={camera.id} isOnvif={camera.protocol === 'onvif'} />
         )}
 
         {activeTab === 'recordings' && (

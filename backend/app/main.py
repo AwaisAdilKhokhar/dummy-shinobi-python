@@ -8,7 +8,7 @@ from typing import List
 
 from app.database import engine, Base
 from app.config import get_settings
-from app.api import auth, cameras, recordings, events, stream
+from app.api import auth, cameras, recordings, events, stream, ptz
 
 settings = get_settings()
 
@@ -71,6 +71,7 @@ app.include_router(cameras.router, prefix="/api")
 app.include_router(recordings.router, prefix="/api")
 app.include_router(events.router, prefix="/api")
 app.include_router(stream.router, prefix="/api")
+app.include_router(ptz.router, prefix="/api")
 
 # Mount static directories for streams and recordings
 if os.path.exists(settings.STREAM_PATH):

@@ -151,6 +151,80 @@ class ApiClient {
     const response = await this.client.get<Event>(`/events/${id}`);
     return response.data;
   }
+
+  // PTZ endpoints
+  async ptzContinuousMove(
+    cameraId: number,
+    pan: number,
+    tilt: number,
+    zoom: number,
+    timeout: number = 1
+  ): Promise<void> {
+    await this.client.post(`/ptz/${cameraId}/continuous-move`, {
+      pan,
+      tilt,
+      zoom,
+      timeout,
+    });
+  }
+
+  async ptzAbsoluteMove(
+    cameraId: number,
+    pan: number,
+    tilt: number,
+    zoom: number
+  ): Promise<void> {
+    await this.client.post(`/ptz/${cameraId}/absolute-move`, {
+      pan,
+      tilt,
+      zoom,
+    });
+  }
+
+  async ptzRelativeMove(
+    cameraId: number,
+    pan: number,
+    tilt: number,
+    zoom: number
+  ): Promise<void> {
+    await this.client.post(`/ptz/${cameraId}/relative-move`, {
+      pan,
+      tilt,
+      zoom,
+    });
+  }
+
+  async ptzStop(cameraId: number): Promise<void> {
+    await this.client.post(`/ptz/${cameraId}/stop`);
+  }
+
+  async getPtzPresets(cameraId: number): Promise<any[]> {
+    const response = await this.client.get(`/ptz/${cameraId}/presets`);
+    return response.data.presets;
+  }
+
+  async ptzGotoPreset(cameraId: number, presetToken: string): Promise<void> {
+    await this.client.post(`/ptz/${cameraId}/goto-preset`, {
+      preset_token: presetToken,
+    });
+  }
+
+  async ptzSetPreset(cameraId: number, name: string): Promise<{ preset_token: string }> {
+    const response = await this.client.post(`/ptz/${cameraId}/set-preset`, { name });
+    return response.data;
+  }
+
+  async ptzRemovePreset(cameraId: number, presetToken: string): Promise<void> {
+    await this.client.delete(`/ptz/${cameraId}/presets/${presetToken}`);
+  }
+
+  async ptzGotoHome(cameraId: number): Promise<void> {
+    await this.client.post(`/ptz/${cameraId}/home`);
+  }
+
+  async ptzSetHome(cameraId: number): Promise<void> {
+    await this.client.post(`/ptz/${cameraId}/set-home`);
+  }
 }
 
 export const apiClient = new ApiClient();
