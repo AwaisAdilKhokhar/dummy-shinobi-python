@@ -193,3 +193,58 @@ def get_motion_detection_status(
         "active": is_active,
         "sensitivity": camera.motion_sensitivity
     }
+
+
+@router.get("/{camera_id}/test-stream")
+def test_stream_connection(
+    camera_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Test if the camera stream is accessible."""
+    import subprocess
+    import cv2
+
+    camera = CameraService.get_camera(db, camera_id, current_user)
+
+    # Build authenticated stream URL
+    stream_url = camera.stream_url
+    if camera.username and camera.password and "rtsp://" in stream_url:
+        stream_url = stream_url.replace("rtsp://", f"rtsp://{camera.username}:{camera.password}@")
+
+    results = {
+        "stream_url_format": stream_url.split("://")[0] + "://...",
+        "opencv_test": False,
+        "ffmpeg_test": False,
+        "opencv_backends": [],
+        "error": None
+    }
+
+    try:
+        # Test OpenCV backends
+        results["opencv_backends"] = [cv2.videoio_registry.getBackendName(b) for b in cv2.videoio_registry.getBackends()]
+
+        # Test OpenCV connection
+        cap = cv2.VideoCapture(stream_url, cv2.CAP_FFMPEG)
+        if cap.isOpened():
+            results["opencv_test"] = True
+            ret, frame = cap.read()
+            if ret:
+                results["opencv_test"] = "Can read frames"
+            else:
+                results["opencv_test"] = "Opened but can't read frames"
+            cap.release()
+
+        # Test FFmpeg connection (quick probe)
+        cmd = ["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "default=noprint_wrappers=1:nokey=1", stream_url]
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=5)
+        if result.returncode == 0:
+            results["ffmpeg_test"] = True
+        else:
+            results["ffmpeg_test"] = f"Failed: {result.stderr}"
+
+    except Exception as e:
+        results["error"] = str(e)
+        logger.error(f"Stream test error: {e}")
+
+    return results

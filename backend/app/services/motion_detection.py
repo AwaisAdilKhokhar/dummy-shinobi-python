@@ -103,12 +103,36 @@ class MotionDetectionService:
             logger.info(f"Starting motion detection loop for camera {camera_id}")
             logger.info(f"Connecting to stream: {stream_url.replace(stream_url.split('@')[0].split('://')[-1] + '@' if '@' in stream_url else '', '***@')}")
 
-            cap = cv2.VideoCapture(stream_url)
+            # Try to open the video stream with RTSP options
+            cap = cv2.VideoCapture(stream_url, cv2.CAP_FFMPEG)
+
+            # Set buffer size to reduce latency
+            cap.set(cv2.CAP_PROP_BUFFERSIZE, 3)
+
+            # Try to open with retries
+            retry_count = 0
+            max_retries = 3
+            while not cap.isOpened() and retry_count < max_retries:
+                retry_count += 1
+                logger.warning(f"Failed to open stream for camera {camera_id}, retry {retry_count}/{max_retries}")
+                time.sleep(2)
+                cap = cv2.VideoCapture(stream_url, cv2.CAP_FFMPEG)
+                cap.set(cv2.CAP_PROP_BUFFERSIZE, 3)
+
             if not cap.isOpened():
-                logger.error(f"Failed to open video stream for camera {camera_id}")
+                logger.error(f"Failed to open video stream for camera {camera_id} after {max_retries} retries")
+                logger.error(f"Stream URL format: {stream_url.split('://')[0]}://...")
+                logger.error(f"OpenCV backends available: {[cv2.videoio_registry.getBackendName(b) for b in cv2.videoio_registry.getBackends()]}")
                 return
 
             logger.info(f"Successfully connected to stream for camera {camera_id}")
+
+            # Get stream properties
+            fps = cap.get(cv2.CAP_PROP_FPS)
+            width = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
+            height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
+            logger.info(f"Stream properties - FPS: {fps}, Resolution: {width}x{height}")
+
             frame_count = 0
             error_count = 0
             max_errors = 10
