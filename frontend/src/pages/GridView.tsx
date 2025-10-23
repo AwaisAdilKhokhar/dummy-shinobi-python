@@ -79,23 +79,6 @@ export const GridView: React.FC = () => {
     }
   };
 
-  const _stopStream = async (cameraId: number) => {
-    try {
-      await apiClient.stopStream(cameraId);
-      setStreams(prev => {
-        const newStreams = new Map(prev);
-        newStreams.set(cameraId, {
-          cameraId,
-          streamUrl: null,
-          isStreaming: false
-        });
-        return newStreams;
-      });
-    } catch (error) {
-      console.error(`Failed to stop stream for camera ${cameraId}`, error);
-    }
-  };
-
   const onLayoutChange = (newLayout: Array<any>) => {
     setLayout(newLayout);
     // Save layout to localStorage
