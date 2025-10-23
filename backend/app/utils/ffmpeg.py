@@ -2,6 +2,9 @@ import subprocess
 import os
 from typing import Optional, Dict
 import json
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class FFmpegProcessor:
@@ -41,15 +44,20 @@ class FFmpegProcessor:
             stream_url = stream_url.replace("rtsp://", f"rtsp://{username}:{password}@")
 
         # Ensure output directory exists
-        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        output_dir = os.path.dirname(output_path)
+        os.makedirs(output_dir, exist_ok=True)
+        logger.info(f"Created recording directory: {output_dir}")
+        logger.info(f"Recording will be saved to: {output_path}")
 
         cmd = [
             "ffmpeg",
             "-rtsp_transport", "tcp",
             "-i", stream_url,
-            "-c", "copy",
+            "-c:v", "copy",
+            "-c:a", "aac",
             "-f", "mp4",
-            "-movflags", "+faststart"
+            "-movflags", "+frag_keyframe+empty_moov+faststart",
+            "-y"  # Overwrite output file if it exists
         ]
 
         if duration:
@@ -57,7 +65,16 @@ class FFmpegProcessor:
 
         cmd.append(output_path)
 
+        # Log the command (sanitize credentials)
+        cmd_str = ' '.join(cmd)
+        if '@' in cmd_str:
+            sanitized_cmd = cmd_str.split('rtsp://')[0] + 'rtsp://***@' + cmd_str.split('@')[-1]
+        else:
+            sanitized_cmd = cmd_str
+        logger.info(f"Starting FFmpeg with command: {sanitized_cmd}")
+
         process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        logger.info(f"FFmpeg process started with PID: {process.pid}")
         return process
 
     @staticmethod
