@@ -79,7 +79,7 @@ export const GridView: React.FC = () => {
     }
   };
 
-  const stopStream = async (cameraId: number) => {
+  const _stopStream = async (cameraId: number) => {
     try {
       await apiClient.stopStream(cameraId);
       setStreams(prev => {
