@@ -45,4 +45,4 @@ services:
 
 networks:
   dummy-shinobi-python_default:
-    external: true
+    name: dummy-shinobi-python_default
