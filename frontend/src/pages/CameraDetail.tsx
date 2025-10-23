@@ -16,6 +16,7 @@ export const CameraDetail: React.FC = () => {
   const [isStreaming, setIsStreaming] = useState(false);
   const [streamUrl, setStreamUrl] = useState<string>('');
   const [isRecording, setIsRecording] = useState(false);
+  const [activeRecordingId, setActiveRecordingId] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<'live' | 'recordings' | 'ptz'>('live');
   const [loading, setLoading] = useState(true);
   const [motionDetectionEnabled, setMotionDetectionEnabled] = useState(false);
@@ -101,11 +102,27 @@ export const CameraDetail: React.FC = () => {
     if (!camera) return;
 
     try {
-      await apiClient.startRecording(camera.id);
+      const response = await apiClient.startRecording(camera.id);
       setIsRecording(true);
+      setActiveRecordingId(response.recording_id);
       toast.success('Recording started');
     } catch (error) {
       toast.error('Failed to start recording');
+    }
+  };
+
+  const handleStopRecording = async () => {
+    if (!camera || !activeRecordingId) return;
+
+    try {
+      await apiClient.stopRecording(activeRecordingId);
+      setIsRecording(false);
+      setActiveRecordingId(null);
+      toast.success('Recording stopped');
+      // Reload recordings to show the new one
+      loadRecordings(camera.id);
+    } catch (error) {
+      toast.error('Failed to stop recording');
     }
   };
 
@@ -276,8 +293,12 @@ export const CameraDetail: React.FC = () => {
                   <FiPlay /> Start Recording
                 </button>
               ) : (
-                <button className="px-4 py-2 bg-red-600 text-white rounded-lg flex items-center gap-2">
-                  <span className="animate-pulse">●</span> Recording...
+                <button
+                  onClick={handleStopRecording}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center gap-2"
+                >
+                  <FiSquare /> Stop Recording
+                  <span className="ml-2 w-2 h-2 bg-white rounded-full animate-pulse"></span>
                 </button>
               )}
 

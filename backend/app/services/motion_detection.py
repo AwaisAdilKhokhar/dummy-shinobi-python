@@ -3,6 +3,9 @@ import numpy as np
 from typing import Optional, List, Tuple
 import threading
 import time
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class MotionDetector:
@@ -97,25 +100,52 @@ class MotionDetectionService:
         detector = MotionDetector(sensitivity=sensitivity)
 
         def detection_loop():
+            logger.info(f"Starting motion detection loop for camera {camera_id}")
+            logger.info(f"Connecting to stream: {stream_url.replace(stream_url.split('@')[0].split('://')[-1] + '@' if '@' in stream_url else '', '***@')}")
+
             cap = cv2.VideoCapture(stream_url)
+            if not cap.isOpened():
+                logger.error(f"Failed to open video stream for camera {camera_id}")
+                return
+
+            logger.info(f"Successfully connected to stream for camera {camera_id}")
+            frame_count = 0
+            error_count = 0
+            max_errors = 10
+
             while camera_id in cls.active_detectors:
                 ret, frame = cap.read()
                 if not ret:
+                    error_count += 1
+                    logger.warning(f"Failed to read frame from camera {camera_id} (error {error_count}/{max_errors})")
+                    if error_count >= max_errors:
+                        logger.error(f"Too many errors reading from camera {camera_id}, stopping detection")
+                        break
                     time.sleep(1)
                     continue
 
-                motion_detected, detected_regions = detector.detect_motion(frame, regions)
+                error_count = 0  # Reset error count on successful frame
+                frame_count += 1
 
-                if motion_detected and callback:
-                    callback(camera_id, detected_regions)
+                try:
+                    motion_detected, detected_regions = detector.detect_motion(frame, regions)
+
+                    if motion_detected:
+                        logger.info(f"Motion detected on camera {camera_id} in {len(detected_regions)} regions")
+                        if callback:
+                            callback(camera_id, detected_regions)
+                except Exception as e:
+                    logger.error(f"Error in motion detection for camera {camera_id}: {e}")
 
                 time.sleep(0.1)  # Check 10 times per second
 
             cap.release()
+            logger.info(f"Motion detection stopped for camera {camera_id} after {frame_count} frames")
 
         thread = threading.Thread(target=detection_loop, daemon=True)
         cls.active_detectors[camera_id] = thread
         thread.start()
+        logger.info(f"Motion detection thread started for camera {camera_id}")
 
     @classmethod
     def stop_detection(cls, camera_id: int):

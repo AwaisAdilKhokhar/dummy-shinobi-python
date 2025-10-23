@@ -20,9 +20,22 @@ export const GridView: React.FC = () => {
   const [streams, setStreams] = useState<Map<number, CameraStream>>(new Map());
   const [loading, setLoading] = useState(true);
   const [layout, setLayout] = useState<Array<any>>([]);
+  const [containerWidth, setContainerWidth] = useState(1200);
 
   useEffect(() => {
     loadCameras();
+
+    // Update container width on resize
+    const updateWidth = () => {
+      const container = document.querySelector('.grid-view-container');
+      if (container) {
+        setContainerWidth(container.clientWidth - 32); // subtract padding
+      }
+    };
+
+    updateWidth();
+    window.addEventListener('resize', updateWidth);
+    return () => window.removeEventListener('resize', updateWidth);
   }, []);
 
   const loadCameras = async () => {
@@ -136,11 +149,11 @@ export const GridView: React.FC = () => {
         layout={layout}
         cols={12}
         rowHeight={80}
-        width={1200}
+        width={containerWidth}
         onLayoutChange={onLayoutChange}
         draggableHandle=".drag-handle"
-        compactType={null}
-        preventCollision={false}
+        compactType="vertical"
+        preventCollision={true}
       >
         {cameras.map((camera) => {
           const stream = streams.get(camera.id);

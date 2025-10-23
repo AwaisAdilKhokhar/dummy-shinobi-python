@@ -74,9 +74,14 @@ def create_camera(
     # Start motion detection if enabled
     if db_camera.motion_detection_enabled:
         try:
+            # Build authenticated stream URL
+            stream_url = db_camera.stream_url
+            if db_camera.username and db_camera.password and "rtsp://" in stream_url:
+                stream_url = stream_url.replace("rtsp://", f"rtsp://{db_camera.username}:{db_camera.password}@")
+
             MotionDetectionService.start_detection(
                 db_camera.id,
-                db_camera.stream_url,
+                stream_url,
                 db_camera.motion_sensitivity,
                 callback=lambda cam_id, regions: motion_detected_callback(cam_id, regions),
                 regions=db_camera.motion_regions
@@ -149,9 +154,14 @@ def toggle_motion_detection(
     if enabled:
         # Start detection
         try:
+            # Build authenticated stream URL
+            stream_url = camera.stream_url
+            if camera.username and camera.password and "rtsp://" in stream_url:
+                stream_url = stream_url.replace("rtsp://", f"rtsp://{camera.username}:{camera.password}@")
+
             MotionDetectionService.start_detection(
                 camera.id,
-                camera.stream_url,
+                stream_url,
                 camera.motion_sensitivity,
                 callback=lambda cam_id, regions: motion_detected_callback(cam_id, regions),
                 regions=camera.motion_regions
