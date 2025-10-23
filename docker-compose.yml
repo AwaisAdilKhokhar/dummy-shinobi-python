@@ -61,7 +61,3 @@ volumes:
   redis_data:
   recordings:
   streams:
-
-networks:
-  default:
-    name: dummy-shinobi-python_default
