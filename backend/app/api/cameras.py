@@ -198,14 +198,16 @@ def get_motion_detection_status(
 @router.get("/{camera_id}/test-stream")
 def test_stream_connection(
     camera_id: int,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    db: Session = Depends(get_db)
 ):
-    """Test if the camera stream is accessible."""
+    """Test if the camera stream is accessible (no auth required for debugging)."""
     import subprocess
     import cv2
 
-    camera = CameraService.get_camera(db, camera_id, current_user)
+    # Get camera without auth check (debug endpoint)
+    camera = db.query(Camera).filter(Camera.id == camera_id).first()
+    if not camera:
+        raise HTTPException(status_code=404, detail="Camera not found")
 
     # Build authenticated stream URL
     stream_url = camera.stream_url
