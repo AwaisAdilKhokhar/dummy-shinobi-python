@@ -7,6 +7,7 @@ import { Layout } from '@/components/Layout';
 import { Login } from '@/pages/Login';
 import { Register } from '@/pages/Register';
 import { Dashboard } from '@/pages/Dashboard';
+import { GridView } from '@/pages/GridView';
 import { CameraDetail } from '@/pages/CameraDetail';
 import { CameraForm } from '@/pages/CameraForm';
 
@@ -43,6 +44,16 @@ function App() {
                 <ProtectedRoute>
                   <Layout>
                     <Dashboard />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/grid"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <GridView />
                   </Layout>
                 </ProtectedRoute>
               }

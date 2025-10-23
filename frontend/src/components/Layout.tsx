@@ -1,7 +1,7 @@
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { FiLogOut, FiVideo, FiUser } from 'react-icons/fi';
+import { FiLogOut, FiVideo, FiUser, FiGrid, FiList } from 'react-icons/fi';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -10,6 +10,7 @@ interface LayoutProps {
 export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const handleLogout = () => {
     logout();
@@ -21,10 +22,37 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       <nav className="bg-gray-800 border-b border-gray-700">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-16">
-            <Link to="/" className="flex items-center gap-2 text-white font-bold text-xl">
-              <FiVideo className="text-2xl" />
-              Shinobi Clone
-            </Link>
+            <div className="flex items-center gap-6">
+              <Link to="/" className="flex items-center gap-2 text-white font-bold text-xl">
+                <FiVideo className="text-2xl" />
+                Shinobi Clone
+              </Link>
+
+              <div className="flex items-center gap-2">
+                <Link
+                  to="/"
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg transition ${
+                    location.pathname === '/'
+                      ? 'bg-blue-600 text-white'
+                      : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                  }`}
+                >
+                  <FiList />
+                  <span className="text-sm">List</span>
+                </Link>
+                <Link
+                  to="/grid"
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg transition ${
+                    location.pathname === '/grid'
+                      ? 'bg-blue-600 text-white'
+                      : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                  }`}
+                >
+                  <FiGrid />
+                  <span className="text-sm">Grid</span>
+                </Link>
+              </div>
+            </div>
 
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2 text-gray-300">
