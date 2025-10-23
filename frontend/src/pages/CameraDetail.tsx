@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { apiClient } from '@/services/api';
-import { Camera, Recording } from '@/types';
+import { Camera, Recording, Event, EventType } from '@/types';
 import { VideoPlayer } from '@/components/VideoPlayer';
 import { PTZControls } from '@/components/PTZControls';
-import { FiArrowLeft, FiPlay, FiSquare, FiSettings, FiTrash2, FiDownload } from 'react-icons/fi';
+import { FiArrowLeft, FiPlay, FiSquare, FiSettings, FiTrash2, FiDownload, FiEye } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import { format } from 'date-fns';
 
@@ -18,11 +18,16 @@ export const CameraDetail: React.FC = () => {
   const [isRecording, setIsRecording] = useState(false);
   const [activeTab, setActiveTab] = useState<'live' | 'recordings' | 'ptz'>('live');
   const [loading, setLoading] = useState(true);
+  const [motionDetectionEnabled, setMotionDetectionEnabled] = useState(false);
+  const [motionDetectionActive, setMotionDetectionActive] = useState(false);
+  const [motionEvents, setMotionEvents] = useState<Event[]>([]);
 
   useEffect(() => {
     if (id) {
       loadCamera(parseInt(id));
       loadRecordings(parseInt(id));
+      loadMotionDetectionStatus(parseInt(id));
+      loadMotionEvents(parseInt(id));
     }
   }, [id]);
 
@@ -30,10 +35,30 @@ export const CameraDetail: React.FC = () => {
     try {
       const data = await apiClient.getCamera(cameraId);
       setCamera(data);
+      setMotionDetectionEnabled(data.motion_detection_enabled || false);
     } catch (error) {
       toast.error('Failed to load camera');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadMotionDetectionStatus = async (cameraId: number) => {
+    try {
+      const status = await apiClient.getMotionDetectionStatus(cameraId);
+      setMotionDetectionEnabled(status.enabled);
+      setMotionDetectionActive(status.active);
+    } catch (error) {
+      console.error('Failed to load motion detection status', error);
+    }
+  };
+
+  const loadMotionEvents = async (cameraId: number) => {
+    try {
+      const events = await apiClient.getEvents(cameraId, EventType.MOTION_DETECTED);
+      setMotionEvents(events.slice(0, 5)); // Last 5 events
+    } catch (error) {
+      console.error('Failed to load motion events', error);
     }
   };
 
@@ -81,6 +106,25 @@ export const CameraDetail: React.FC = () => {
       toast.success('Recording started');
     } catch (error) {
       toast.error('Failed to start recording');
+    }
+  };
+
+  const handleToggleMotionDetection = async () => {
+    if (!camera) return;
+
+    try {
+      const newEnabled = !motionDetectionEnabled;
+      await apiClient.toggleMotionDetection(camera.id, newEnabled);
+      setMotionDetectionEnabled(newEnabled);
+      setMotionDetectionActive(newEnabled);
+      toast.success(`Motion detection ${newEnabled ? 'enabled' : 'disabled'}`);
+
+      // Reload events if enabled
+      if (newEnabled) {
+        loadMotionEvents(camera.id);
+      }
+    } catch (error) {
+      toast.error('Failed to toggle motion detection');
     }
   };
 
@@ -214,7 +258,7 @@ export const CameraDetail: React.FC = () => {
               </div>
             </div>
 
-            <div className="flex gap-4">
+            <div className="flex gap-4 mb-6">
               {isStreaming ? (
                 <button
                   onClick={handleStopStream}
@@ -236,7 +280,46 @@ export const CameraDetail: React.FC = () => {
                   <span className="animate-pulse">●</span> Recording...
                 </button>
               )}
+
+              <button
+                onClick={handleToggleMotionDetection}
+                className={`px-4 py-2 rounded-lg flex items-center gap-2 ${
+                  motionDetectionEnabled
+                    ? 'bg-green-600 hover:bg-green-700 text-white'
+                    : 'bg-gray-700 hover:bg-gray-600 text-white'
+                }`}
+              >
+                <FiEye />
+                {motionDetectionEnabled ? 'Motion Detection ON' : 'Motion Detection OFF'}
+                {motionDetectionActive && (
+                  <span className="ml-1 w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+                )}
+              </button>
             </div>
+
+            {/* Motion Events */}
+            {motionDetectionEnabled && motionEvents.length > 0 && (
+              <div className="bg-gray-800 rounded-lg p-4">
+                <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+                  <FiEye /> Recent Motion Events
+                </h3>
+                <div className="space-y-2">
+                  {motionEvents.map(event => (
+                    <div key={event.id} className="p-3 bg-gray-700 rounded-lg">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <div className="text-sm text-white font-medium">{event.title}</div>
+                          <div className="text-xs text-gray-400 mt-1">{event.description}</div>
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {format(new Date(event.created_at), 'PPpp')}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 

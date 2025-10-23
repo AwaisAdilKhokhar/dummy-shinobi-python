@@ -225,6 +225,19 @@ class ApiClient {
   async ptzSetHome(cameraId: number): Promise<void> {
     await this.client.post(`/ptz/${cameraId}/set-home`);
   }
+
+  // Motion detection endpoints
+  async toggleMotionDetection(cameraId: number, enabled: boolean): Promise<{ message: string; enabled: boolean }> {
+    const response = await this.client.post(`/cameras/${cameraId}/motion-detection/toggle`, null, {
+      params: { enabled }
+    });
+    return response.data;
+  }
+
+  async getMotionDetectionStatus(cameraId: number): Promise<{ enabled: boolean; active: boolean; sensitivity: number }> {
+    const response = await this.client.get(`/cameras/${cameraId}/motion-detection/status`);
+    return response.data;
+  }
 }
 
 export const apiClient = new ApiClient();
